@@ -1,33 +1,34 @@
-import React, { useEffect, useState } from "react";
-import About from "./About";
-import ArticleList from "./ArticleList";
+import React from "react";
+import { useParams } from "react-router-dom";
+import useDocumentTitle from "../hooks/useDocumentTitle";
+import useQuery from "../hooks/useQueryAdvanced";
+import { makeEmojiList } from "../utils";
 
-function HomePage() {
-  // fetch data for posts
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [posts, setPosts] = useState([]);
-
-  useEffect(() => {
-    setIsLoaded(false);
-    fetch("http://localhost:4000/posts")
-      .then((r) => r.json())
-      .then((posts) => {
-        setPosts(posts);
-        setIsLoaded(true);
-      });
-  }, []);
+function ArticlePage () {
+  // fetch data for a post
+  const { id } = useParams();
+  const { data: post, isLoaded } = useQuery(
+    `http://localhost:4000/posts/${ id }`
+  );
 
   // set the document title
-  useEffect(() => {
-    document.title = "Underreacted | Home";
-  }, []);
+  const pageTitle = post ? `Underreacted | ${ post.title }` : "Underreacted";
+  useDocumentTitle( pageTitle );
+
+  if ( !isLoaded ) return <h3>Loading...</h3>;
+
+  const { minutes, title, date, preview } = post;
+  const emojis = makeEmojiList( minutes );
 
   return (
-    <>
-      <About />
-      {isLoaded ? <ArticleList posts={posts} /> : <h3>Loading...</h3>}
-    </>
+    <article>
+      <h3>{ title }</h3>
+      <small>
+        { date } • { emojis } { minutes } min read
+      </small>
+      <p>{ preview }</p>
+    </article>
   );
 }
 
-export default HomePage;
+export default ArticlePage;
